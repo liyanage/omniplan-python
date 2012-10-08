@@ -69,6 +69,9 @@
     <change idref="r1" attribute="efficiency" type="real" from="1" to="0.5" resolved="yes"/>
     <change idref="r1" attribute="standardHoursString" type="string" from="-;-;-;-;-;-;-" to="-;28800,43200,46800,72000;28800,43200,46800,72000;28800,43200,46800,72000;28800,43200,46800,72000;28800,43200,46800,72000;-" resolved="yes"/>
   </resource-change-set>
+  <resource-change-set user="Marc Liyanage" date="2012-10-08T08:19:58.483Z" timestamp="2012-10-08T08:19:58.483Z">
+    <change idref="r-1" attribute="dsid" type="string" from="" resolved="yes"/>
+  </resource-change-set>
   <metadata-change-set user="Marc Liyanage" date="2012-10-06T22:58:44.631Z" timestamp="2012-10-06T22:58:44.631Z">
     <change idref="m1" attribute="fixedDate" type="date" from="2007-01-01T20:00:00.000Z" to="2012-10-06T07:00:00.000Z" resolved="yes"/>
   </metadata-change-set>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <omniplan xmlns="http://www.omnigroup.com/namespace/OmniPlan/v2">
-  <window x="247" y="55" w="1300" h="647">
+  <window x="269" y="226" w="1300" h="647">
     <editing-scenario>dAi2TTkURgT</editing-scenario>
     <view>task</view>
     <change-tracking/>
@@ -65,7 +65,7 @@
     </task-view>
     <resource-view>
       <split-view-divider-position>306</split-view-divider-position>
-      <outline x="0" y="0" w="306" h="526">
+      <outline x="0" y="0" w="306" h="543">
         <column name="IM" width="20"/>
         <column name="Notes" width="20"/>
         <column name="Type" width="49"/>
@@ -73,7 +73,7 @@
         <column name="#" width="75"/>
         <column name="Efficiency" width="78"/>
       </outline>
-      <timeline x="-50" y="0" w="722" h="526">
+      <timeline x="11" y="0" w="965" h="543">
         <task-bar-label task-type="group" position="left">
           <key>Title</key>
         </task-bar-label>
