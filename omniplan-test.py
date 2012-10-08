@@ -58,9 +58,6 @@ class TestOmniPlanDocument(unittest.TestCase):
         tasks = self.document.tasks_for_custom_data_value('CustomKey', 'Custom Value 3')
         self.assertEquals(len(tasks), 2)
 
-#     def test_plist_representation(self):
-#         print self.document.plist_representation()
-
     def test_change_task_value(self):
         task = self.document.task_for_id(2)
         self.assertEquals(task.effort, omniplan.WorkDayTimeInterval(workdays=1))
@@ -91,10 +88,18 @@ class TestOmniPlanDocument(unittest.TestCase):
         self.assertEquals(len(resources), 1)
         self.assertEquals(resources[0].name, 'Resource 1')
 
+    def test_date(self):
+        task = self.document.task_for_id(5)
+        self.assertIsNotNone(task.starting_date.tzinfo)
+
 #     def test_example(self):
 #         document = self.document
 #         for task in document.all_tasks():
 #             print '{}: effort {}'.format(task.name, task.effort)
+
+#     def test_plist_representation(self):
+#         print self.document.plist_representation()
+
 
         
 if __name__ == "__main__":

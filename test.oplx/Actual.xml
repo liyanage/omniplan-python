@@ -111,6 +111,7 @@
     <child-task idref="t1"/>
     <child-task idref="t2"/>
     <child-task idref="t3"/>
+    <child-task idref="t5"/>
   </task>
   <task id="t1">
     <title>Task 1</title>
@@ -154,6 +155,11 @@
       <string>Custom Value 2</string>
     </user-data>
     <assignment idref="r1"/>
+  </task>
+  <task id="t5">
+    <title>Task 5</title>
+    <effort>28800</effort>
+    <start-constraint-date>2013-01-01T23:00:00.000Z</start-constraint-date>
   </task>
   <critical-path root="-1" enabled="false" resources="false">
     <color r="1" g="0.5" b="0.5"/>

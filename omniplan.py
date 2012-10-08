@@ -51,7 +51,7 @@ import subprocess
 import plistlib
 import pickle
 import struct
-from abc import ABCMeta, abstractmethod
+import datetime
 
 
 class FourCharacterCode(object):
@@ -135,17 +135,13 @@ class TimeInterval(object):
 
 class AbstractValueConverter(object):
 
-    __metaclass = ABCMeta
-
     @classmethod
-    @abstractmethod
     def decode_omniplan_value(cls, value):
-        pass
+        return value
 
     @classmethod
-    @abstractmethod
     def encode_omniplan_value(cls, value):
-        pass
+        return value
 
 
 class WorkDayTimeIntervalValueConverter(AbstractValueConverter):
@@ -180,8 +176,31 @@ class FourCharacterCodeValueConverter(AbstractValueConverter):
     def encode_omniplan_value(cls, string):
         return FourCharacterCode.string_to_value(string)
 
+
+class UTCDateValueConverter(AbstractValueConverter):
+
+    # UTC time zone class reference implementation from the Python "datetime" module documentation
+    class UTC(datetime.tzinfo):
+    
+        def utcoffset(self, dt):
+            return datetime.timedelta(0)
+    
+        def tzname(self, dt):
+            return "UTC"
+    
+        def dst(self, dt):
+            return datetime.timedelta(0)
+    
+    utc = UTC()
+
+    @classmethod
+    def decode_omniplan_value(cls, value):
+        return value.replace(tzinfo=cls.utc)
+
+
 class TaskChangeRecord(object):
     pass
+
 
 class SimplePropertyTaskChangeRecord(TaskChangeRecord):
 
@@ -270,7 +289,10 @@ class Task(TaskCollection):
         'completed_effort': WorkDayTimeIntervalValueConverter,
         'custom_data': CustomDataValueConverter,
         'task_type': FourCharacterCodeValueConverter,
-        'task_status': FourCharacterCodeValueConverter
+        'task_status': FourCharacterCodeValueConverter,
+        'ending_date': UTCDateValueConverter,
+        'starting_constraint_date': UTCDateValueConverter,
+        'starting_date': UTCDateValueConverter,
     }
 
     def __init__(self, task_data, parent=None):

@@ -1,25 +1,26 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <omniplan xmlns="http://www.omnigroup.com/namespace/OmniPlan/v2">
-  <window x="250" y="223" w="1057" h="630">
+  <window x="247" y="55" w="1300" h="647">
     <editing-scenario>dAi2TTkURgT</editing-scenario>
     <view>task</view>
     <change-tracking/>
     <draw-folded/>
     <status-display>basic</status-display>
     <task-view>
-      <split-view-divider-position>683</split-view-divider-position>
-      <outline x="0" y="0" w="683" h="526">
+      <split-view-divider-position>809</split-view-divider-position>
+      <outline x="0" y="0" w="809" h="528">
         <column name="Violations" width="20"/>
         <column name="Notes" width="20"/>
-        <column name="Title" width="211"/>
+        <column name="Title" width="236"/>
         <column name="Effort" width="70"/>
         <column name="CustomKey" width="143"/>
-        <column name="Remaining Effort" width="124"/>
+        <column name="Remaining Effort" width="79"/>
         <column name="%Done" width="87"/>
+        <column name="Start" width="140"/>
         <expanded-items idrefs="t3"/>
-        <selected-items-at-filter-time idrefs="t3 t2 t4"/>
+        <selected-items-at-filter-time idrefs="t4 t3 t2 t5"/>
       </outline>
-      <gantt-view x="-29" y="0" w="373" h="526">
+      <gantt-view x="-18" y="0" w="490" h="528">
         <view-mode>actual</view-mode>
         <dependency-lines/>
         <constraints/>
@@ -72,7 +73,7 @@
         <column name="#" width="75"/>
         <column name="Efficiency" width="78"/>
       </outline>
-      <timeline x="-67" y="0" w="722" h="526">
+      <timeline x="-50" y="0" w="722" h="526">
         <task-bar-label task-type="group" position="left">
           <key>Title</key>
         </task-bar-label>
@@ -114,7 +115,7 @@
     </resource-view>
     <calendar>
       <split-view-divider-position>290</split-view-divider-position>
-      <outline x="0" y="0" w="290" h="491">
+      <outline x="0" y="0" w="290" h="495">
         <column name="IM" width="20"/>
         <column name="Notes" width="20"/>
         <column name="Type" width="49"/>
@@ -125,7 +126,7 @@
     </calendar>
   </window>
   <project>
-    <next-task-id>5</next-task-id>
+    <next-task-id>6</next-task-id>
     <next-resource-id>2</next-resource-id>
     <scenario id="dAi2TTkURgT" name="Actual" filename="Actual.xml"/>
     <date-display dates="true" times="true" seconds="false"/>

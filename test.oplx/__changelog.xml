@@ -54,6 +54,16 @@
     <change idref="t4" attribute="internalAssignments" type="string" from="" to="1" resolved="yes"/>
     <change idref="t4" attribute="resourceLeveledDate" type="date" to="2012-10-10T22:30:00.000Z" resolved="yes"/>
   </task-change-set>
+  <task-change-set user="Marc Liyanage" date="2012-10-08T06:17:40.399Z" timestamp="2012-10-08T06:17:40.399Z">
+    <change idref="t5" to="t-1" to-position="3" resolved="yes">
+      <change idref="t5" attribute="CustomKey" type="string" to=""/>
+      <change idref="t5" attribute="startConstraintDate" type="date" to="2012-10-01T22:00:00.000Z"/>
+      <change idref="t5" attribute="title" type="string" to="Task 5"/>
+    </change>
+  </task-change-set>
+  <task-change-set user="Marc Liyanage" date="2012-10-08T06:23:39.617Z" timestamp="2012-10-08T06:23:39.617Z">
+    <change idref="t5" attribute="startConstraintDate" type="date" from="2012-10-01T22:00:00.000Z" to="2013-01-01T23:00:00.000Z" resolved="yes"/>
+  </task-change-set>
   <resource-change-set user="Marc Liyanage" date="2012-10-07T00:18:18.322Z" timestamp="2012-10-07T00:18:18.322Z">
     <change idref="r-1" attribute="standardHoursString" type="string" from="-;-;-;-;-;-;-" to=";28800,43200,46800,61200;28800,43200,46800,61200;28800,43200,46800,61200;28800,43200,46800,61200;28800,43200,46800,61200;" resolved="yes"/>
     <change idref="r1" attribute="efficiency" type="real" from="1" to="0.5" resolved="yes"/>
