@@ -79,6 +79,10 @@
   <resource id="r1">
     <name>Resource 1</name>
     <type>Staff</type>
+    <user-data>
+      <key>dsid</key>
+      <string>1234</string>
+    </user-data>
     <efficiency>0.5</efficiency>
     <schedule>
       <schedule-day day-of-week="monday">

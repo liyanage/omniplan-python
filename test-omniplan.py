@@ -58,6 +58,8 @@ class TestOmniPlanDocument(unittest.TestCase):
         tasks = self.document.tasks_for_custom_data_value('CustomKey', 'Custom Value 3')
         self.assertEquals(len(tasks), 2)
 
+        self.assertIsNone(self.document.task_for_id(5).custom_data_value('DummyKey'))
+
     def test_change_task_value(self):
         task = self.document.task_for_id(2)
         self.assertEquals(task.effort, omniplan.WorkDayTimeInterval(workdays=1))

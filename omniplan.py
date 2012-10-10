@@ -52,7 +52,7 @@ import plistlib
 import pickle
 import struct
 import datetime
-
+import sys
 
 class FourCharacterCode(object):
 
@@ -195,6 +195,8 @@ class UTCDateValueConverter(AbstractValueConverter):
 
     @classmethod
     def decode_omniplan_value(cls, value):
+        if not value:
+            return None
         return value.replace(tzinfo=cls.utc)
 
 
@@ -216,7 +218,7 @@ class SimplePropertyTaskChangeRecord(TaskChangeRecord):
         return """set {} to {}""".format(applescript_property_name, applescript_value)
 
     def __repr__(self):
-        return '<Property change for task {}: property "{}", old value "{}", current value "{}">'.format(self.task, self.property_name, self.old_value, getattr(self.task, self.property_name))
+        return u'<Property change for task {}: property "{}", old value "{}", current value "{}">'.format(self.task, self.property_name, self.old_value, getattr(self.task, self.property_name))
 
 
 class TaskCollection(object):
@@ -306,7 +308,12 @@ class Task(TaskCollection):
 
             converter_class = self.value_converter_for_property(key)
             if converter_class:
-                value = converter_class.decode_omniplan_value(value)
+                try:
+                    value = converter_class.decode_omniplan_value(value)
+                except:
+                    print >> sys.stderr, 'Unable to decode value of type {} for key "{}":'.format(type(value), key)
+                    print value
+                    raise
 
             if key in self.simple_properties:
                 setattr(self, key, value)
@@ -327,8 +334,10 @@ class Task(TaskCollection):
         # start capturing property updates
         self.change_records = []
 
-    def custom_data_value(key):
-        return self.custom_data[key]
+    def custom_data_value(self, key):
+        if key in self.custom_data:
+            return self.custom_data[key]
+        return None
 
     def __setattr__(self, key, value):
         if key in self.updatable_properties:
@@ -417,7 +426,7 @@ class Task(TaskCollection):
     #### Utilities
 
     def __repr__(self):
-        return '<Task {0}: {1}>'.format(self.id, self.name.encode('utf-8'))
+        return u'<Task {0}: {1}>'.format(self.id, self.name)
 
 
 class TaskDependency(object):
@@ -445,7 +454,7 @@ class Resource(object):
         return [assignment.task for assignment in self.resource_assignments]
 
     def __repr__(self):
-        return '<Resource {0} {1}>'.format(self.id, self.name)
+        return u'<Resource {0} {1}>'.format(self.id, self.name)
 
 
 class ResourceAssignment(object):
@@ -459,12 +468,12 @@ class ResourceAssignment(object):
         task.add_resource_assignment(self)
 
     def __repr__(self):
-        return '<ResourceAssignment resource={0} unit={1} task={2}>'.format(self.resource, self.units, self.task)
+        return u'<ResourceAssignment resource={0} unit={1} task={2}>'.format(self.resource, self.units, self.task)
 
 
 class OmniPlanDocument(TaskCollection):
 
-    def __init__(self, name):
+    def __init__(self, name, allow_cache=False):
         super(OmniPlanDocument, self).__init__()
         self.name = name
         self.document_data_raw = None
@@ -476,22 +485,23 @@ class OmniPlanDocument(TaskCollection):
         self.task_map = {}
         self.resource_map = {}
 
-        self.read_document()
+        self.read_document(allow_cache=allow_cache)
         self.parse_document_data()
 
     def __repr__(self):
-        return '<OmniPlanDocument {0}>'.format(self.name)
+        return u'<OmniPlanDocument {0}>'.format(self.name)
 
-    def read_document(self):
+    def read_document(self, allow_cache=False):
         script_code = self.omniplan_data_query_applescript_code()
 
-        try:
-            with open('/tmp/omniplan-cache.dat') as f:
-                data = pickle.load(f)
-                if data:
-                    self.document_data, self.document_data_raw = data
-        except:
-            pass
+        if allow_cache:
+            try:
+                with open('/tmp/omniplan-cache.dat') as f:
+                    data = pickle.load(f)
+                    if data:
+                        self.document_data, self.document_data_raw = data
+            except:
+                pass
 
         if not self.document_data:
             cmd = AppleScript(script_code)
@@ -500,8 +510,9 @@ class OmniPlanDocument(TaskCollection):
                 raise Exception('Unable to get project data for OmniPlan document "{}", make sure that it is already open in OmniPlan'.format(self.name))
             self.document_data_raw = cmd.stdout
             self.document_data = cmd.plist_result()
-            with open('/tmp/omniplan-cache.dat', 'w') as f:
-                pickle.dump([self.document_data, self.document_data_raw], f)
+            if allow_cache:
+                with open('/tmp/omniplan-cache.dat', 'w') as f:
+                    pickle.dump([self.document_data, self.document_data_raw], f)
 
     def plist_representation(self):
         return self.document_data_raw
