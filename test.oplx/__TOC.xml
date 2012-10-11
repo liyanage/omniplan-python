@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <omniplan xmlns="http://www.omnigroup.com/namespace/OmniPlan/v2">
-  <window x="124" y="253" w="1136" h="654">
+  <window x="86" y="181" w="1136" h="654">
     <editing-scenario>dAi2TTkURgT</editing-scenario>
     <view>task</view>
     <change-tracking/>
@@ -20,7 +20,7 @@
         <expanded-items idrefs="t3"/>
         <selected-items-at-filter-time idrefs="t4 t3 t2 t5"/>
       </outline>
-      <gantt-view x="-18" y="0" w="326" h="535">
+      <gantt-view x="-11" y="0" w="326" h="535">
         <view-mode>actual</view-mode>
         <dependency-lines/>
         <constraints/>
@@ -74,7 +74,7 @@
         <column name="Efficiency" width="78"/>
         <column name="dsid" width="50"/>
       </outline>
-      <timeline x="11" y="0" w="801" h="550">
+      <timeline x="-32" y="0" w="801" h="550">
         <task-bar-label task-type="group" position="left">
           <key>Title</key>
         </task-bar-label>
@@ -116,7 +116,7 @@
     </resource-view>
     <calendar>
       <split-view-divider-position>290</split-view-divider-position>
-      <outline x="0" y="0" w="290" h="495">
+      <outline x="0" y="0" w="290" h="519">
         <column name="IM" width="20"/>
         <column name="Notes" width="20"/>
         <column name="Type" width="49"/>
