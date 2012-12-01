@@ -570,27 +570,52 @@ class OmniPlanDocument(TaskCollection):
 
     @classmethod
     def first_open_document_name(cls):
-        script_code = """
-        tell application "OmniPlan"
-            try
-                return name of document of window 1
-            on error
-                try
-                    return name of document 1
-                on error
-                    return ""
-                end try
-            end try
-        end tell
-        """
-        cmd = AppleScript(script_code)
-        cmd.run()
-        document_name = cmd.stdout
+        document_name = cls.xth_open_document_name(1)
 
         if not document_name:
             raise Exception('Unable to get name of frontmost document')
 
         return document_name
+
+    @classmethod
+    def xth_open_document_name(cls, n):
+        script_code = """
+        tell application "OmniPlan"
+            try
+                return name of document of window {0}
+            on error
+                try
+                    return name of document {0}
+                on error
+                    return ""
+                end try
+            end try
+        end tell
+        """.format(n)
+        cmd = AppleScript(script_code)
+        cmd.run()
+        document_name = cmd.stdout
+
+        if not document_name:
+            return ""
+
+        return document_name
+
+    @classmethod
+    def all_open_documents_names(cls):
+        n = 1
+        documents = []
+
+        while True:
+            document_name = cls.xth_open_document_name(n)
+
+            if not document_name:
+                break
+
+            documents.append(document_name)
+            n += 1
+
+        return documents
 
     @classmethod
     def omniplan_data_query_applescript_code(cls):

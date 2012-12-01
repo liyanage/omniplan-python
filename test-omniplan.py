@@ -41,6 +41,9 @@ class TestOmniPlanDocument(unittest.TestCase):
     def test_document_name(self):
         self.assertEquals(self.document.name, 'test.oplx')
 
+    def test_open_documents_names(self):
+        self.assertEquals(OmniPlanDocument.all_open_documents_names(), ['test.oplx'])
+
     def test_dependencies(self):
         task = self.document.task_for_id(2)
         self.assertEquals(task.dependent_tasks()[0].name, 'Task 1')
