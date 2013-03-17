@@ -73,7 +73,7 @@ class AppleScript(object):
     def run(self, *arguments):
         cmd = 'osascript -'.split() + [str(i) for i in arguments]
         popen = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        self.stdout, self.stderr = popen.communicate(input=self.script)
+        self.stdout, self.stderr = popen.communicate(input=self.script.encode('utf-8'))
         self.stdout = self.stdout.rstrip()
 
     def plist_result(self):
@@ -260,6 +260,39 @@ class TaskCollection(object):
         for task_data in task_data_list:
             task = Task(task_data, self)
             self.add_task(task)
+    
+    def applescript_target_wrapper(self):
+        pass
+    
+    def create_task(self, properties):
+        properties = self.encoded_properties(properties)
+        applescript_property_pairs = []
+        for key, applescript_property_name, applescript_value in properties:
+            applescript_property_pairs.append(u'{}: {}'.format(applescript_property_name, applescript_value))
+        applescript_properties_string = u'{{{items}}}'.format(items=', '.join(applescript_property_pairs))
+
+        make_task_string = u"""
+        set newTask to make new task with properties {}
+        return id of newTask
+        """.format(applescript_properties_string)
+
+        create_task_code = self.applescript_target_wrapper().format(make_task_string)
+
+        print create_task_code
+
+        cmd = AppleScript(create_task_code)
+        cmd.run()
+        task_id = cmd.stdout
+        print task_id
+        
+            
+    def encoded_properties(self, properties):
+        encoded_properties = []
+        for key, value in properties.items():
+            applescript_property_name = Task.applescript_name_for_property(key)
+            applescript_value = Task.applescript_value_for_property_and_value(key, value)
+            encoded_properties.append((key, applescript_property_name, applescript_value))
+        return encoded_properties
 
     def level(self):
         if not self.parent:
@@ -283,6 +316,7 @@ class Task(TaskCollection):
     simple_properties = set('completed_effort ending_constraint_date outline_number ending_date duration remaining_effort effort id name total_cost priority starting_date starting_constraint_date prerequisites_data custom_data task_type task_status'.split())
     updatable_properties = {
         'effort': {'quoted': False},
+        'name': {'quoted': True},
         'completed_effort': {'quoted': False, 'applescript_property_name': 'completed effort'},
     }
 
@@ -353,28 +387,46 @@ class Task(TaskCollection):
     def clear_change_records(self):
         del(self.change_records[:])
 
-    def value_converter_for_property(self, property_name):
-        return self.property_value_converter_map.get(property_name)
+    @classmethod
+    def value_converter_for_property(cls, property_name):
+        return cls.property_value_converter_map.get(property_name)
 
     def converted_value_for_property(self, property_name):
-        value_converter = self.value_converter_for_property(property_name)
-        value = getattr(self, property_name)
+        return self.converted_value_for_property_and_value(property_name, getattr(self, property_name))
+
+    def applescript_value_for_property(self, property_name):
+        return self.applescript_value_for_property_and_value(property_name, getattr(self, property_name))
+
+    @classmethod
+    def converted_value_for_property_and_value(cls, property_name, value):
+        value_converter = cls.value_converter_for_property(property_name)
         if value_converter:
             value = value_converter.encode_omniplan_value(value)
         return value
 
-    def applescript_value_for_property(self, property_name):
-        value_description = self.updatable_properties.get(property_name)
-        value = self.converted_value_for_property(property_name)
+    @classmethod
+    def applescript_value_for_property_and_value(cls, property_name, value):
+        value_description = cls.updatable_properties.get(property_name)
+        value = cls.converted_value_for_property_and_value(property_name, value)
         if value_description.get('quoted', False):
-            return '"{}"'.format(value)
+            value = value.replace('"', r'\"')
+            return u'"{}"'.format(value)
         return value
 
-    def applescript_name_for_property(self, property_name):
-        value_description = self.updatable_properties.get(property_name)
+    @classmethod
+    def applescript_name_for_property(cls, property_name):
+        value_description = cls.updatable_properties.get(property_name)
         return value_description.get('applescript_property_name', property_name)
 
-    #### Resorces
+    def applescript_target_wrapper(self):
+        task_target_code = u"""
+            tell task {}
+                {{}}
+            end tell
+        """.format(self.id)
+        return self.document().applescript_target_wrapper().format(task_target_code)
+
+    #### Resources
 
     def add_resource_assignment(self, assignment):
         self.resource_assignments.append(assignment)
@@ -408,14 +460,8 @@ class Task(TaskCollection):
     def commit_changes(self, dry_run=False):
         property_change_applescript_code = '\n'.join(change_record.change_applescript_code() for change_record in self.change_records)
         self.clear_change_records()
-
-        change_applescript_code = """
-        tell document "{}" of application "OmniPlan"
-            tell task {}
-                {}
-            end tell
-        end tell
-        """.format(self.document().name, self.id, property_change_applescript_code)
+        
+        change_applescript_code = self.applescript_target_wrapper().format(property_change_applescript_code)
 
         if dry_run:
             print change_applescript_code
@@ -517,6 +563,13 @@ class OmniPlanDocument(TaskCollection):
     def plist_representation(self):
         return self.document_data_raw
 
+    def applescript_target_wrapper(self):
+        return u"""
+        tell document "{}" of application "OmniPlan"
+            {{}}
+        end tell
+        """.format(self.name)
+
     def parse_document_data(self):
         self.add_tasks_for_task_data_list(self.document_data['child_tasks'])
         self.parse_resources()
@@ -616,6 +669,7 @@ class OmniPlanDocument(TaskCollection):
             n += 1
 
         return documents
+
 
     @classmethod
     def omniplan_data_query_applescript_code(cls):

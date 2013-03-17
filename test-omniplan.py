@@ -30,7 +30,7 @@ class TestValueConversion(unittest.TestCase):
 
 class TestOmniPlanDocument(unittest.TestCase):
 
-    def setUp(self):    
+    def setUp(self):
         self.document = OmniPlanDocument('test.oplx')
 
     def test_first_open_document(self):
@@ -96,6 +96,20 @@ class TestOmniPlanDocument(unittest.TestCase):
     def test_date(self):
         task = self.document.task_for_id(5)
         self.assertIsNotNone(task.starting_date.tzinfo)
+
+    def test_create_task(self):
+        task_data = {
+            'effort': omniplan.WorkDayTimeInterval(workdays=1),
+            'name': b"\N{UMBRELLA} foo bar".decode('unicode-escape'),
+        }
+        task = self.document.create_task(task_data)
+
+# todo: set
+#         title
+#         custom item key/value pair (r)
+#         effort
+#         assignee
+        
 
 #     def test_example(self):
 #         document = self.document
