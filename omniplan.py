@@ -207,7 +207,6 @@ class TaskChangeRecord(object):
 class SimplePropertyTaskChangeRecord(TaskChangeRecord):
 
     def __init__(self, task, property_name):
-
         self.property_name = property_name
         self.old_value = getattr(task, property_name, None)
         self.task = task
@@ -220,6 +219,19 @@ class SimplePropertyTaskChangeRecord(TaskChangeRecord):
     def __repr__(self):
         return u'<Property change for task {}: property "{}", old value "{}", current value "{}">'.format(self.task, self.property_name, self.old_value, getattr(self.task, self.property_name))
 
+class SetCustomDataValueTaskChangeRecord(TaskChangeRecord):
+    
+    def __init__(self, task, name, value):
+        self.name = name
+        self.value = value
+        self.task = task
+
+    def change_applescript_code(self):
+        return """make custom data entry with properties {{name:"{}", value:"{}"}}""".format(self.name, self.value)
+
+    def __repr__(self):
+        return u'<Set custom data value change for task {}: name "{}", value "{}">'.format(self.task, self.name, self.value)
+    
 
 class TaskCollection(object):
     """An abstract base class for classes that are containers for sets of tasks in a project."""
@@ -275,16 +287,18 @@ class TaskCollection(object):
         set newTask to make new task with properties {}
         return id of newTask
         """.format(applescript_properties_string)
-
         create_task_code = self.applescript_target_wrapper().format(make_task_string)
-
-        print create_task_code
-
         cmd = AppleScript(create_task_code)
         cmd.run()
         task_id = cmd.stdout
-        print task_id
         
+        read_task_code = self.document().omniplan_task_data_query_applescript_code()
+        cmd = AppleScript(read_task_code)
+        cmd.run(self.document().name, task_id)
+        task_data = cmd.plist_result()
+        task = Task(task_data, self)
+        self.add_task(task)
+        return task
             
     def encoded_properties(self, properties):
         encoded_properties = []
@@ -314,7 +328,7 @@ class Task(TaskCollection):
     TASK_STATUS_PAST_DUE = 'OPTp'
 
     simple_properties = set('completed_effort ending_constraint_date outline_number ending_date duration remaining_effort effort id name total_cost priority starting_date starting_constraint_date prerequisites_data custom_data task_type task_status'.split())
-    updatable_properties = {
+    mutable_simple_properties = {
         'effort': {'quoted': False},
         'name': {'quoted': True},
         'completed_effort': {'quoted': False, 'applescript_property_name': 'completed effort'},
@@ -374,9 +388,14 @@ class Task(TaskCollection):
         return None
 
     def __setattr__(self, key, value):
-        if key in self.updatable_properties:
+        if key in self.mutable_simple_properties:
             self.add_change_record(SimplePropertyTaskChangeRecord(self, key))
         super(Task, self).__setattr__(key, value)
+
+    def set_custom_data_value(self, name, value):
+        self.custom_data[name] = value
+        self.document().update_custom_data_value_to_task_map_for_task(self)
+        self.add_change_record(SetCustomDataValueTaskChangeRecord(self, name, value))
 
     def add_change_record(self, record):
         if not hasattr(self, 'change_records'):
@@ -406,7 +425,7 @@ class Task(TaskCollection):
 
     @classmethod
     def applescript_value_for_property_and_value(cls, property_name, value):
-        value_description = cls.updatable_properties.get(property_name)
+        value_description = cls.mutable_simple_properties.get(property_name)
         value = cls.converted_value_for_property_and_value(property_name, value)
         if value_description.get('quoted', False):
             value = value.replace('"', r'\"')
@@ -415,7 +434,7 @@ class Task(TaskCollection):
 
     @classmethod
     def applescript_name_for_property(cls, property_name):
-        value_description = cls.updatable_properties.get(property_name)
+        value_description = cls.mutable_simple_properties.get(property_name)
         return value_description.get('applescript_property_name', property_name)
 
     def applescript_target_wrapper(self):
@@ -458,10 +477,11 @@ class Task(TaskCollection):
         return self.has_dependents() or self.has_prerequisites()
 
     def commit_changes(self, dry_run=False):
-        property_change_applescript_code = '\n'.join(change_record.change_applescript_code() for change_record in self.change_records)
+        change_records = self.change_records
+        change_applescript_code = '\n'.join(change_record.change_applescript_code() for change_record in change_records)
         self.clear_change_records()
         
-        change_applescript_code = self.applescript_target_wrapper().format(property_change_applescript_code)
+        change_applescript_code = self.applescript_target_wrapper().format(change_applescript_code)
 
         if dry_run:
             print change_applescript_code
@@ -538,7 +558,7 @@ class OmniPlanDocument(TaskCollection):
         return u'<OmniPlanDocument {0}>'.format(self.name)
 
     def read_document(self, allow_cache=False):
-        script_code = self.omniplan_data_query_applescript_code()
+        script_code = self.omniplan_document_data_query_applescript_code()
 
         if allow_cache:
             try:
@@ -602,8 +622,13 @@ class OmniPlanDocument(TaskCollection):
 
     def task_added(self, task):
         self.task_map[task.id] = task
+        self.update_custom_data_value_to_task_map_for_task(task)
+    
+    def update_custom_data_value_to_task_map_for_task(self, task):
         for key, value in task.custom_data.items():
-            self.custom_data_value_to_task_map.setdefault(key, {}).setdefault(value, []).append(task)
+            tasks = self.custom_data_value_to_task_map.setdefault(key, {}).setdefault(value, [])
+            if task not in tasks:
+                tasks.append(task)
 
     def tasks_for_custom_data_value(self, key, value):
         return self.custom_data_value_to_task_map.get(key, {}).get(value, [])
@@ -670,10 +695,37 @@ class OmniPlanDocument(TaskCollection):
 
         return documents
 
+    @classmethod
+    def omniplan_task_data_query_applescript_code(cls):
+        task_query_code = """
+        on run argv
+            set document_name to item 1 of argv
+            set task_id to item 2 of argv as number
+
+            tell application "OmniPlan"
+                try
+                    set |document| to document document_name
+                on error
+                    return ""
+                end try
+
+                set |task| to task task_id of |document|
+            end tell
+            set task_record to record_for_task(|task|)
+
+            tell application "System Events"
+                set task_plist_item to make new property list item with properties {kind:record, value:task_record}
+            end tell
+
+            return text of task_plist_item
+        end run
+
+        """
+        return task_query_code + cls.omniplan_applescript_utils_code()
 
     @classmethod
-    def omniplan_data_query_applescript_code(cls):
-        return """
+    def omniplan_document_data_query_applescript_code(cls):
+        doc_query_code = """
         on run argv
             set document_name to item 1 of argv
 
@@ -702,7 +754,13 @@ class OmniPlanDocument(TaskCollection):
 
             return text of root_plist_item
         end run
+        """
+        
+        return doc_query_code + cls.omniplan_applescript_utils_code()
 
+    @classmethod
+    def omniplan_applescript_utils_code(cls):
+        return """
         on get_selection_for_document(|document|)
             set should_hide to false
             tell application "System Events"
@@ -754,6 +812,18 @@ class OmniPlanDocument(TaskCollection):
             return missing value
         end window_for_document
 
+        on record_for_task(|task|)
+            using terms from application "OmniPlan"
+                tell |task|
+                    set custom_data to my custom_data_for_task(|task|)
+                    set child_task_list to my child_task_list_for_parent(it)
+                    set prerequisites_list to my prerequisites_list_for_task(it)
+                    set task_record to {|id|:id, |name|:name, completed_effort:completed effort, |duration|:duration, |effort|:effort, ending_date:ending date, ending_constraint_date:my replace_missing_value(ending constraint date), outline_number:outline number, |priority|:priority, remaining_effort:remaining effort, starting_constraint_date:my replace_missing_value(starting constraint date), starting_date:starting date, task_status:task status, task_type:task type, total_cost:total cost, child_tasks:child_task_list, custom_data:custom_data, prerequisites_data:prerequisites_list}
+                    return task_record
+                end tell
+            end using terms from
+        end record_for_task
+
         on child_task_list_for_parent(parent)
             using terms from application "OmniPlan"
                 set task_list to {}
@@ -765,18 +835,6 @@ class OmniPlanDocument(TaskCollection):
                 return task_list
             end using terms from
         end child_task_list_for_parent
-
-        on record_for_task(task)
-            using terms from application "OmniPlan"
-                tell |task|
-                    set custom_data to my custom_data_for_task(|task|)
-                    set child_task_list to my child_task_list_for_parent(it)
-                    set prerequisites_list to my prerequisites_list_for_task(it)
-                    set task_record to {|id|:id, |name|:name, completed_effort:completed effort, |duration|:duration, |effort|:effort, ending_date:ending date, ending_constraint_date:my replace_missing_value(ending constraint date), outline_number:outline number, |priority|:priority, remaining_effort:remaining effort, starting_constraint_date:my replace_missing_value(starting constraint date), starting_date:starting date, task_status:task status, task_type:task type, total_cost:total cost, child_tasks:child_task_list, custom_data:custom_data, prerequisites_data:prerequisites_list}
-                    return task_record
-                end tell
-            end using terms from
-        end record_for_task
 
         on prerequisites_list_for_task(task)
             using terms from application "OmniPlan"

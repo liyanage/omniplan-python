@@ -98,11 +98,28 @@ class TestOmniPlanDocument(unittest.TestCase):
         self.assertIsNotNone(task.starting_date.tzinfo)
 
     def test_create_task(self):
+        task_name = b"\N{UMBRELLA} foo bar".decode('unicode-escape')
         task_data = {
             'effort': omniplan.WorkDayTimeInterval(workdays=1),
-            'name': b"\N{UMBRELLA} foo bar".decode('unicode-escape'),
+            'name': task_name,
         }
         task = self.document.create_task(task_data)
+        self.assertIsNotNone(task)
+        self.assertEquals(task.name, task_name)
+
+        task.set_custom_data_value('CustomKey', 'Custom Value 4')
+        self.assertEquals(task.custom_data_value('CustomKey'), 'Custom Value 4')
+        lookup_tasks = self.document.tasks_for_custom_data_value('CustomKey', 'Custom Value 4')
+        self.assertTrue(task in lookup_tasks)
+        self.assertEquals(task.name, task_name)
+        task.commit_changes()
+
+        subtask_data = {
+            'effort': omniplan.WorkDayTimeInterval(workdays=1),
+            'name': "this is a subtask",
+        }
+        subtask = task.create_task(subtask_data)
+        
 
 # todo: set
 #         title
