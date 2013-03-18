@@ -92,6 +92,9 @@ class TestOmniPlanDocument(unittest.TestCase):
         resources = task.assigned_resources()
         self.assertEquals(len(resources), 1)
         self.assertEquals(resources[0].name, 'Resource 1')
+        
+        resource = self.document.resource_for_name('Resource 1')
+        self.assertEquals(resources[0], resource)
 
     def test_date(self):
         task = self.document.task_for_id(5)
@@ -119,6 +122,22 @@ class TestOmniPlanDocument(unittest.TestCase):
             'name': "this is a subtask",
         }
         subtask = task.create_task(subtask_data)
+
+    def test_assignment(self):
+        task_name = b"\N{UMBRELLA} foo bar".decode('unicode-escape')
+        task_data = {
+            'effort': omniplan.WorkDayTimeInterval(workdays=1),
+            'name': task_name,
+        }
+        task = self.document.create_task(task_data)
+        
+        resource = self.document.resource_for_name('Resource 2')
+        if not resource:
+            resource = self.document.create_resource(name='Resource 2')
+        
+        self.assertIsNotNone(resource)
+        task.assign_to_resource(resource)
+        task.commit_changes()
         
 
 # todo: set

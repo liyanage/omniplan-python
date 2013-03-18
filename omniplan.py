@@ -201,7 +201,9 @@ class UTCDateValueConverter(AbstractValueConverter):
 
 
 class TaskChangeRecord(object):
-    pass
+    
+    def targets_document(self):
+        return False
 
 
 class SimplePropertyTaskChangeRecord(TaskChangeRecord):
@@ -218,6 +220,22 @@ class SimplePropertyTaskChangeRecord(TaskChangeRecord):
 
     def __repr__(self):
         return u'<Property change for task {}: property "{}", old value "{}", current value "{}">'.format(self.task, self.property_name, self.old_value, getattr(self.task, self.property_name))
+
+
+class AddResourceAssignmentTaskChangeRecord(TaskChangeRecord):
+    
+    def __init__(self, resource_assignment):
+        self.resource_assignment = resource_assignment
+
+    def change_applescript_code(self):
+        return """assign resource {} to task {} units {}""".format(self.resource_assignment.resource.id, self.resource_assignment.task.id, self.resource_assignment.units)
+
+    def targets_document(self):
+        return True
+
+    def __repr__(self):
+        return u'<Add resource assignment for task {}: resource {}>'.format(self.resource_assignment.task, self.resource_assignment.resource)
+
 
 class SetCustomDataValueTaskChangeRecord(TaskChangeRecord):
     
@@ -447,11 +465,15 @@ class Task(TaskCollection):
 
     #### Resources
 
-    def add_resource_assignment(self, assignment):
+    def _add_resource_assignment(self, assignment):
         self.resource_assignments.append(assignment)
 
     def assigned_resources(self):
         return [assignment.resource for assignment in self.resource_assignments]
+
+    def assign_to_resource(self, resource):
+        assignment = ResourceAssignment(resource, self)
+        self.add_change_record(AddResourceAssignmentTaskChangeRecord(assignment))
 
     #### Dependencies
 
@@ -478,10 +500,21 @@ class Task(TaskCollection):
 
     def commit_changes(self, dry_run=False):
         change_records = self.change_records
-        change_applescript_code = '\n'.join(change_record.change_applescript_code() for change_record in change_records)
+        
+        records_targeting_document = [record for record in change_records if record.targets_document()]
+        records_targeting_task = [record for record in change_records if not record.targets_document()]
+
         self.clear_change_records()
         
+        change_applescript_code = '\n'.join(change_record.change_applescript_code() for change_record in records_targeting_task)
         change_applescript_code = self.applescript_target_wrapper().format(change_applescript_code)
+        
+        doc_change_applescript_code = '\n'.join(change_record.change_applescript_code() for change_record in records_targeting_document)
+        doc_change_applescript_code = self.document().applescript_target_wrapper().format(doc_change_applescript_code)
+        
+        change_applescript_code += doc_change_applescript_code
+        
+#        print change_applescript_code
 
         if dry_run:
             print change_applescript_code
@@ -513,7 +546,7 @@ class Resource(object):
         self.id = resource_data['id']
         self.name = resource_data['name']
 
-    def add_resource_assignment(self, assignment):
+    def _add_resource_assignment(self, assignment):
         self.resource_assignments.append(assignment)
 
     def assigned_tasks(self):
@@ -525,13 +558,13 @@ class Resource(object):
 
 class ResourceAssignment(object):
 
-    def __init__(self, resource, task, units):
+    def __init__(self, resource, task, units=1):
         self.resource = resource
         self.task = task
         self.units = units
 
-        resource.add_resource_assignment(self)
-        task.add_resource_assignment(self)
+        resource._add_resource_assignment(self)
+        task._add_resource_assignment(self)
 
     def __repr__(self):
         return u'<ResourceAssignment resource={0} unit={1} task={2}>'.format(self.resource, self.units, self.task)
@@ -638,6 +671,27 @@ class OmniPlanDocument(TaskCollection):
 
     def resource_for_id(self, id):
         return self.resource_map[id]
+
+    def resource_for_name(self, name):
+        for resource in self.resource_map.values():
+            if resource.name == name:
+                return resource
+        return None
+
+    def create_resource(self, name):
+        make_resource_string = u"""
+        set newResource to make new resource with properties {{name: "{}"}}
+        return id of newResource
+        """.format(name)
+        
+        create_resource_code = self.applescript_target_wrapper().format(make_resource_string)
+        cmd = AppleScript(create_resource_code)
+        cmd.run()
+        resource_id = cmd.stdout
+        
+        resource = Resource({"id": resource_id, "name": name})
+        self.add_resource(resource)
+        return resource
 
     def all_tasks(self):
         return self.descendants()
