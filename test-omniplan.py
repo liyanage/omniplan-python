@@ -138,14 +138,17 @@ class TestOmniPlanDocument(unittest.TestCase):
         self.assertIsNotNone(resource)
         task.assign_to_resource(resource)
         task.commit_changes()
-        
 
-# todo: set
-#         title
-#         custom item key/value pair (r)
-#         effort
-#         assignee
-        
+    def test_color(self):
+        task_name = b"\N{UMBRELLA} color test".decode('unicode-escape')
+        task_data = {
+            'effort': omniplan.WorkDayTimeInterval(workdays=1),
+            'name': task_name,
+        }
+        task = self.document.create_task(task_data)
+        task.set_color(omniplan.Color.purple)
+        task.commit_changes()
+
 
 #     def test_example(self):
 #         document = self.document

@@ -52,6 +52,7 @@ import plistlib
 import pickle
 import struct
 import datetime
+import collections
 import sys
 
 class FourCharacterCode(object):
@@ -200,6 +201,8 @@ class UTCDateValueConverter(AbstractValueConverter):
         return value.replace(tzinfo=cls.utc)
 
 
+# orange red blue purple green black light blue
+
 class TaskChangeRecord(object):
     
     def targets_document(self):
@@ -220,6 +223,34 @@ class SimplePropertyTaskChangeRecord(TaskChangeRecord):
 
     def __repr__(self):
         return u'<Property change for task {}: property "{}", old value "{}", current value "{}">'.format(self.task, self.property_name, self.old_value, getattr(self.task, self.property_name))
+
+
+Color = collections.namedtuple('Color', 'r g b a'.split())
+Color.orange    = Color(1.0, 0.6, 0.2, 1.0)
+Color.red       = Color(1.0, 0.0, 0.0, 1.0)
+Color.blue      = Color(0.0, 0.0, 1.0, 1.0)
+Color.green     = Color(0.0, 1.0, 0.0, 1.0)
+Color.black     = Color(0.0, 0.0, 0.0, 1.0)
+Color.purple    = Color(0.8, 0.0, 1.0, 1.0)
+Color.lightblue = Color(0.4, 0.6, 1.0, 1.0)
+
+
+class SetColorTaskChangeRecord(TaskChangeRecord):
+    
+    def __init__(self, task, color):
+        self.task = task
+        self.color = color
+
+    def change_applescript_code(self):
+        c = self.color
+        return """
+		tell style of it
+			set value of attribute "font-fill" to {{r:{}, g:{}, b:{}, a:{}}}
+		end tell
+        """.format(c.r, c.g, c.b, c.a)
+
+    def __repr__(self):
+        return u'<Change color for task {} to {}>'.format(self.task, self.color)
 
 
 class AddResourceAssignmentTaskChangeRecord(TaskChangeRecord):
@@ -482,6 +513,9 @@ class Task(TaskCollection):
 
     def add_prerequisite(self, dependency):
         self.prerequisites.append(dependency)
+
+    def set_color(self, color):
+        self.add_change_record(SetColorTaskChangeRecord(self, color))
 
     def dependent_tasks(self):
         return [dependency.dependent_task for dependency in self.dependents]
