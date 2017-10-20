@@ -1,38 +1,38 @@
-<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<scenario xmlns="http://www.omnigroup.com/namespace/OmniPlan/v2" id="dAi2TTkURgT">
+<?xml version="1.0" encoding="UTF-8"?>
+<scenario xmlns="http://www.omnigroup.com/namespace/OmniPlan/v2" xmlns:opns="http://www.omnigroup.com/namespace/OmniPlan/v2" id="dAi2TTkURgT">
   <start-date>2012-10-06T07:00:00.000Z</start-date>
   <prototype-task>
-    <task id="t4294967294">
+    <task id="t-2">
       <title>Task 1</title>
       <effort>28800</effort>
     </task>
   </prototype-task>
   <prototype-task>
-    <task id="t4294967293">
+    <task id="t-3">
       <title>Milestone 1</title>
       <type>milestone</type>
     </task>
   </prototype-task>
   <prototype-task>
-    <task id="t4294967292">
+    <task id="t-4">
       <title>Group 1</title>
       <type>group</type>
     </task>
   </prototype-task>
   <prototype-resource>
-    <resource id="r4294967294">
+    <resource id="r-2">
       <name>Resource 1</name>
       <type>Staff</type>
     </resource>
   </prototype-resource>
   <prototype-resource>
-    <resource id="r4294967293">
+    <resource id="r-3">
       <name>Equipment 1</name>
       <type>Equipment</type>
     </resource>
   </prototype-resource>
   <prototype-resource>
-    <resource id="r4294967292">
+    <resource id="r-4">
       <name>Material 1</name>
       <type>Material</type>
       <units-available>0</units-available>
@@ -40,13 +40,14 @@
     </resource>
   </prototype-resource>
   <prototype-resource>
-    <resource id="r4294967291">
+    <resource id="r-5">
       <name>Group 1</name>
       <type>Group</type>
     </resource>
   </prototype-resource>
   <top-resource idref="r-1"/>
   <resource id="r-1">
+    <name/>
     <type>Group</type>
     <schedule>
       <schedule-day day-of-week="sunday"/>
@@ -119,6 +120,7 @@
   </task>
   <task id="t1">
     <title>Task 1</title>
+    <leveled-start>2012-10-08T16:30:00.000Z</leveled-start>
     <effort>28800</effort>
     <start-constraint-date>2012-10-08T15:00:00.000Z</start-constraint-date>
     <user-data>
@@ -126,6 +128,7 @@
       <string>Custom Value 3</string>
     </user-data>
     <prerequisite-task idref="t2" kind="SF"/>
+    <start-no-earlier-than>2012-10-08T15:00:00.000Z</start-no-earlier-than>
   </task>
   <task id="t2">
     <title>Task 2</title>
@@ -138,6 +141,7 @@
     </user-data>
     <prerequisite-task idref="t3" kind="SF"/>
     <assignment idref="r1"/>
+    <start-no-earlier-than>2012-10-09T16:30:00.000Z</start-no-earlier-than>
   </task>
   <task id="t3">
     <title>Task 3</title>
@@ -148,6 +152,7 @@
       <key>CustomKey</key>
       <string>Custom Value 3</string>
     </user-data>
+    <start-no-earlier-than>2012-10-10T22:30:00.000Z</start-no-earlier-than>
   </task>
   <task id="t4">
     <title>Task 4</title>
@@ -159,11 +164,14 @@
       <string>Custom Value 2</string>
     </user-data>
     <assignment idref="r1"/>
+    <start-no-earlier-than>2012-10-08T18:00:00.000Z</start-no-earlier-than>
   </task>
   <task id="t5">
     <title>Task 5</title>
+    <leveled-start>2013-01-01T23:00:00.000Z</leveled-start>
     <effort>28800</effort>
     <start-constraint-date>2013-01-01T23:00:00.000Z</start-constraint-date>
+    <start-no-earlier-than>2013-01-01T23:00:00.000Z</start-no-earlier-than>
   </task>
   <critical-path root="-1" enabled="false" resources="false">
     <color r="1" g="0.5" b="0.5"/>

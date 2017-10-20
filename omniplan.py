@@ -80,6 +80,7 @@ class AppleScript(object):
     def plist_result(self):
         if not self.stdout:
             raise Exception("AppleScript code did not produce any output, unable to parse as plist")
+#        print self.stdout
         return plistlib.readPlistFromString(self.stdout)
 
 
@@ -376,7 +377,7 @@ class Task(TaskCollection):
     TASK_STATUS_OK = 'OPTo'
     TASK_STATUS_PAST_DUE = 'OPTp'
 
-    simple_properties = set('completed_effort ending_constraint_date outline_number ending_date duration remaining_effort effort id name total_cost priority starting_date starting_constraint_date prerequisites_data custom_data task_type task_status'.split())
+    simple_properties = set('completed_effort ending_constraint_date outline_number ending_date duration remaining_effort effort id name total_cost priority starting_date starting_constraint_date prerequisites custom_data task_type task_status'.split())
     mutable_simple_properties = {
         'effort': {'quoted': False},
         'name': {'quoted': True},
@@ -387,8 +388,8 @@ class Task(TaskCollection):
         'effort': WorkDayTimeIntervalValueConverter,
         'completed_effort': WorkDayTimeIntervalValueConverter,
         'custom_data': CustomDataValueConverter,
-        'task_type': FourCharacterCodeValueConverter,
-        'task_status': FourCharacterCodeValueConverter,
+#        'task_type': FourCharacterCodeValueConverter,
+#        'task_status': FourCharacterCodeValueConverter,
         'ending_date': UTCDateValueConverter,
         'starting_constraint_date': UTCDateValueConverter,
         'starting_date': UTCDateValueConverter,
@@ -419,6 +420,10 @@ class Task(TaskCollection):
             if key == 'child_tasks':
                 self.add_tasks_for_task_data_list(value)
                 continue
+
+            # if key == 'prerequisites':
+            #     self.add_tasks_for_task_data_list(value)
+            #     continue
 
             raise Exception('Unknown key/value pair in task data: {0}'.format(key))
 
@@ -665,10 +670,11 @@ class OmniPlanDocument(TaskCollection):
 
     def process_dependencies(self):
         for task in self.all_tasks():
-            for dependency_data_item in task.prerequisites_data:
+            for dependency_data_item in task.prerequisites:
+                print dependency_data_item
                 prerequisite_task = self.task_for_id(dependency_data_item['prerequisite_task_id'])
                 dependent_task = self.task_for_id(dependency_data_item['dependent_task_id'])
-                dependency_type = FourCharacterCode.value_to_string(dependency_data_item['dependency_type'])
+                dependency_type = dependency_data_item['dependency_type']
                 dependency = TaskDependency(prerequisite_task, dependent_task, dependency_type)
 
     def parse_resources(self):
@@ -849,134 +855,135 @@ class OmniPlanDocument(TaskCollection):
     @classmethod
     def omniplan_applescript_utils_code(cls):
         return """
-        on get_selection_for_document(|document|)
-            set should_hide to false
-            tell application "System Events"
-                if visible of process "OmniPlan" is false then
-                    set visible of process "OmniPlan" to true
-                    set should_hide to true
-                end if
-            end tell
+on get_selection_for_document(|document|)
+	set should_hide to false
+	tell application "System Events"
+		if visible of process "OmniPlan" is false then
+			set visible of process "OmniPlan" to true
+			set should_hide to true
+		end if
+	end tell
+	
+	set target_window to my window_for_document(|document|)
+	set selected_task_ids to my selected_task_ids_for_window(target_window)
+	set selected_resource_ids to my selected_resource_ids_for_window(target_window)
+	if should_hide then
+		tell application "System Events"
+			set visible of process "OmniPlan" to false
+		end tell
+	end if
+	return {selected_task_ids:selected_task_ids, selected_resource_ids:selected_resource_ids}
+end get_selection_for_document
 
-            set target_window to my window_for_document(|document|)
-            set selected_task_ids to my selected_task_ids_for_window(target_window)
-            set selected_resource_ids to my selected_resource_ids_for_window(target_window)
-            if should_hide then
-                tell application "System Events"
-                    set visible of process "OmniPlan" to false
-                end tell
-            end if
-            return {selected_task_ids:selected_task_ids, selected_resource_ids:selected_resource_ids}
-        end get_selection_for_document
+on selected_task_ids_for_window(|window|)
+	set selected_task_ids to {}
+	tell application "OmniPlan"
+		repeat with |task| in (selected tasks of |window| as list)
+			set end of selected_task_ids to id of |task|
+		end repeat
+	end tell
+	return selected_task_ids
+end selected_task_ids_for_window
 
-        on selected_task_ids_for_window(|window|)
-            set selected_task_ids to {}
-            tell application "OmniPlan"
-                repeat with |task| in (selected tasks of |window| as list)
-                    set end of selected_task_ids to id of |task|
-                end repeat
-            end tell
-            return selected_task_ids
-        end selected_task_ids_for_window
+on selected_resource_ids_for_window(|window|)
+	set selected_resource_ids to {}
+	tell application "OmniPlan"
+		repeat with |resource| in (selected resources of |window| as list)
+			set end of selected_resource_ids to id of |resource|
+		end repeat
+	end tell
+	return selected_resource_ids
+end selected_resource_ids_for_window
 
-        on selected_resource_ids_for_window(|window|)
-            set selected_resource_ids to {}
-            tell application "OmniPlan"
-                repeat with |resource| in (selected resources of |window| as list)
-                    set end of selected_resource_ids to id of |resource|
-                end repeat
-            end tell
-            return selected_resource_ids
-        end selected_resource_ids_for_window
+on window_for_document(|document|)
+	tell application "OmniPlan"
+		repeat with |window| in windows
+			if document of |window| = |document| then
+				return |window|
+			end if
+		end repeat
+	end tell
+	return missing value
+end window_for_document
 
-        on window_for_document(|document|)
-            tell application "OmniPlan"
-                repeat with |window| in windows
-                    if document of |window| = |document| then
-                        return |window|
-                    end if
-                end repeat
-            end tell
-            return missing value
-        end window_for_document
+on child_task_list_for_parent(parent)
+	using terms from application "OmniPlan"
+		set task_list to {}
+		tell parent
+			repeat with child_task in child tasks
+				set end of task_list to my record_for_task(child_task)
+			end repeat
+		end tell
+		return task_list
+	end using terms from
+end child_task_list_for_parent
 
-        on record_for_task(|task|)
-            using terms from application "OmniPlan"
-                tell |task|
-                    set custom_data to my custom_data_for_task(|task|)
-                    set child_task_list to my child_task_list_for_parent(it)
-                    set prerequisites_list to my prerequisites_list_for_task(it)
-                    set task_record to {|id|:id, |name|:name, completed_effort:completed effort, |duration|:duration, |effort|:effort, ending_date:ending date, ending_constraint_date:my replace_missing_value(ending constraint date), outline_number:outline number, |priority|:priority, remaining_effort:remaining effort, starting_constraint_date:my replace_missing_value(starting constraint date), starting_date:starting date, task_status:task status, task_type:task type, total_cost:total cost, child_tasks:child_task_list, custom_data:custom_data, prerequisites_data:prerequisites_list}
-                    return task_record
-                end tell
-            end using terms from
-        end record_for_task
+on record_for_task(task)
+	using terms from application "OmniPlan"
+		tell |task|
+			set custom_data_entries to my custom_data_entries_for_task(|task|)
+			set child_task_list to my child_task_list_for_parent(it)
+			set prerequisites_list to my prerequisites_list_for_task(it)
+			set task_record to {|id|:id, |name|:name, completed_effort:completed effort, |duration|:duration, |effort|:effort, ending_date:ending date, ending_constraint_date:my replace_missing_value(end before date), outline_number:outline number, |priority|:priority, remaining_effort:remaining effort, starting_constraint_date:my replace_missing_value(start after date), starting_date:my replace_missing_value(starting date), task_status:task status as rich text, task_type:task type as rich text, total_cost:total cost, child_tasks:child_task_list, custom_data:custom_data_entries, |prerequisites|:prerequisites_list}
+			return task_record
+		end tell
+	end using terms from
+end record_for_task
 
-        on child_task_list_for_parent(parent)
-            using terms from application "OmniPlan"
-                set task_list to {}
-                tell parent
-                    repeat with child_task in child tasks
-                        set end of task_list to my record_for_task(child_task)
-                    end repeat
-                end tell
-                return task_list
-            end using terms from
-        end child_task_list_for_parent
+on prerequisites_list_for_task(task)
+	using terms from application "OmniPlan"
+		set prerequisites_list to {}
+		repeat with |dependency| in prerequisites of |task|
+			tell |dependency|
+				set end of prerequisites_list to {dependency_type:dependency type as rich text, dependent_task_id:id of dependent task, prerequisite_task_id:id of prerequisite task, lead_percentage:lead percentage, lead_time:lead time}
+			end tell
+		end repeat
+		return prerequisites_list
+	end using terms from
+end prerequisites_list_for_task
 
-        on prerequisites_list_for_task(task)
-            using terms from application "OmniPlan"
-                set prerequisites_list to {}
-                repeat with |dependency| in prerequisites of |task|
-                    tell |dependency|
-                        set end of prerequisites_list to {dependency_type:dependency type, dependent_task_id:id of dependent task, prerequisite_task_id:id of prerequisite task, lead_percentage:lead percentage, lead_time:lead time}
-                    end tell
-                end repeat
-                return prerequisites_list
-            end using terms from
-        end prerequisites_list_for_task
+on custom_data_entries_for_task(task)
+	using terms from application "OmniPlan"
+		set custom_data_entries to {}
+		repeat with entry in custom data entries of |task|
+			set end of custom_data_entries to {|name|:name of entry, |value|:my replace_missing_value(value of entry)}
+		end repeat
+		return custom_data_entries
+	end using terms from
+end custom_data_entries_for_task
 
-        on custom_data_for_task(task)
-            using terms from application "OmniPlan"
-                set custom_data to {}
-                repeat with entry in custom data entries of |task|
-                    set end of custom_data to {|name|:name of entry, |value|:my replace_missing_value(value of entry)}
-                end repeat
-                return custom_data
-            end using terms from
-        end custom_data_for_task
+on resource_list_for_document(|document|)
+	using terms from application "OmniPlan"
+		set resource_list to {}
+		repeat with |resource| in resources of |document|
+			set assignment_list to my assignment_list_for_resource(|resource|)
+			tell |resource|
+				set end of resource_list to {|id|:id, |name|:name, task_assignments:assignment_list}
+			end tell
+		end repeat
+		return resource_list
+	end using terms from
+end resource_list_for_document
 
-        on resource_list_for_document(|document|)
-            using terms from application "OmniPlan"
-                set resource_list to {}
-                repeat with |resource| in resources of |document|
-                    set assignment_list to my assignment_list_for_resource(|resource|)
-                    tell |resource|
-                        set end of resource_list to {|id|:id, |name|:name, task_assignments:assignment_list}
-                    end tell
-                end repeat
-                return resource_list
-            end using terms from
-        end resource_list_for_document
+on assignment_list_for_resource(resource)
+	using terms from application "OmniPlan"
+		set assignment_list to {}
+		repeat with |assignment| in assignments of |resource|
+			tell |assignment|
+				set end of assignment_list to {task_id:id of task of it, |units|:units}
+			end tell
+		end repeat
+		return assignment_list
+	end using terms from
+end assignment_list_for_resource
 
-        on assignment_list_for_resource(resource)
-            using terms from application "OmniPlan"
-                set assignment_list to {}
-                repeat with |assignment| in assignments of |resource|
-                    tell |assignment|
-                        set end of assignment_list to {task_id:id of task of it, |units|:units}
-                    end tell
-                end repeat
-                return assignment_list
-            end using terms from
-        end assignment_list_for_resource
+on replace_missing_value(value)
+	if value is missing value then
+		return ""
+	end if
+	return value
+end replace_missing_value
 
-        on replace_missing_value(value)
-            if value is missing value then
-                return ""
-            end if
-            return value
-        end replace_missing_value
         """
 
 

@@ -1,17 +1,16 @@
-<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<omniplan xmlns="http://www.omnigroup.com/namespace/OmniPlan/v2">
-  <window x="86" y="181" w="1136" h="654">
+<?xml version="1.0" encoding="UTF-8"?>
+<omniplan xmlns="http://www.omnigroup.com/namespace/OmniPlan/v2" xmlns:opnx="http://www.omnigroup.com/namespace/OmniPlan/v2">
+  <window x="799" y="163" w="1377" h="731">
     <editing-scenario>dAi2TTkURgT</editing-scenario>
-    <view>task</view>
+    <view>resource</view>
     <change-tracking/>
-    <draw-folded/>
     <status-display>basic</status-display>
     <task-view>
-      <split-view-divider-position>809</split-view-divider-position>
-      <outline x="0" y="0" w="809" h="535">
+      <split-view-divider-position>659</split-view-divider-position>
+      <outline x="0" y="0" w="659" h="631">
         <column name="Violations" width="20"/>
         <column name="Notes" width="20"/>
-        <column name="Title" width="236"/>
+        <column name="Title" width="150"/>
         <column name="Effort" width="70"/>
         <column name="CustomKey" width="143"/>
         <column name="Remaining Effort" width="79"/>
@@ -20,7 +19,7 @@
         <expanded-items idrefs="t3"/>
         <selected-items-at-filter-time idrefs="t4 t3 t2 t5"/>
       </outline>
-      <gantt-view x="-11" y="0" w="326" h="535">
+      <gantt-view x="0" y="0" w="716" h="631">
         <view-mode>actual</view-mode>
         <dependency-lines/>
         <constraints/>
@@ -61,20 +60,21 @@
         <scale scale-name="Quarter" full-day-width="9.6"/>
         <scale scale-name="Week" full-day-width="162"/>
         <scale scale-name="Year" full-day-width="2.3625"/>
+        <offtime-display>none</offtime-display>
       </gantt-view>
     </task-view>
     <resource-view>
       <split-view-divider-position>306</split-view-divider-position>
-      <outline x="0" y="0" w="306" h="550">
-        <column name="IM" width="20"/>
+      <outline x="0" y="0" w="306" h="647">
         <column name="Notes" width="20"/>
         <column name="Type" width="49"/>
-        <column name="Resource" width="121"/>
+        <column name="Resource" width="150"/>
         <column name="#" width="75"/>
         <column name="Efficiency" width="78"/>
         <column name="dsid" width="50"/>
       </outline>
-      <timeline x="-32" y="0" w="801" h="550">
+      <timeline x="-32" y="0" w="741" h="647">
+        <offtime-display>none</offtime-display>
         <task-bar-label task-type="group" position="left">
           <key>Title</key>
         </task-bar-label>
@@ -125,6 +125,13 @@
         <column name="Schedule Exception" width="20"/>
       </outline>
     </calendar>
+    <network-view>
+      <network-view>
+        <task-table-style/>
+        <milestone-table-style/>
+        <group-table-style/>
+      </network-view>
+    </network-view>
   </window>
   <project>
     <next-task-id>6</next-task-id>
@@ -150,7 +157,7 @@
       <style>
         <value key="font-family">Helvetica</value>
         <value key="font-fill">
-          <color w="0.334677"/>
+          <color space="gg22" w="0.409218"/>
         </value>
         <value key="font-size">11</value>
       </style>
@@ -178,7 +185,7 @@
     <not-editable-style>
       <style>
         <value key="font-fill">
-          <color w="0.334677"/>
+          <color space="gg22" w="0.409218"/>
         </value>
       </style>
     </not-editable-style>
