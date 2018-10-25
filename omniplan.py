@@ -244,11 +244,13 @@ class SetColorTaskChangeRecord(TaskChangeRecord):
 
     def change_applescript_code(self):
         c = self.color
-        return """
+        max = 2**16 - 1
+        script_code = """
 		tell style of it
-			set value of attribute "font-fill" to {{r:{}, g:{}, b:{}, a:{}}}
+			set value of attribute "font-fill" to {{{}, {}, {}, {}}}
 		end tell
-        """.format(c.r, c.g, c.b, c.a)
+        """.format(c.r * max, c.g * max, c.b * max, c.a * max)
+        return script_code
 
     def __repr__(self):
         return u'<Change color for task {} to {}>'.format(self.task, self.color)
@@ -420,10 +422,6 @@ class Task(TaskCollection):
             if key == 'child_tasks':
                 self.add_tasks_for_task_data_list(value)
                 continue
-
-            # if key == 'prerequisites':
-            #     self.add_tasks_for_task_data_list(value)
-            #     continue
 
             raise Exception('Unknown key/value pair in task data: {0}'.format(key))
 
@@ -670,8 +668,9 @@ class OmniPlanDocument(TaskCollection):
 
     def process_dependencies(self):
         for task in self.all_tasks():
-            for dependency_data_item in task.prerequisites:
-                print dependency_data_item
+            prerequisite_infos = task.prerequisites
+            task.prerequisites = []
+            for dependency_data_item in prerequisite_infos:
                 prerequisite_task = self.task_for_id(dependency_data_item['prerequisite_task_id'])
                 dependent_task = self.task_for_id(dependency_data_item['dependent_task_id'])
                 dependency_type = dependency_data_item['dependency_type']
