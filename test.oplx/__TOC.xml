@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<omniplan xmlns="http://www.omnigroup.com/namespace/OmniPlan/v2" xmlns:opnx="http://www.omnigroup.com/namespace/OmniPlan/v2">
-  <window x="799" y="163" w="1377" h="731">
+<omniplan xmlns="http://www.omnigroup.com/namespace/OmniPlan/v2" xmlns:opnx="http://www.omnigroup.com/namespace/OmniPlan/v2" file-format-version="2">
+  <window x="819" y="149" w="1670" h="767">
     <editing-scenario>dAi2TTkURgT</editing-scenario>
     <view>resource</view>
     <change-tracking/>
@@ -64,8 +64,8 @@
       </gantt-view>
     </task-view>
     <resource-view>
-      <split-view-divider-position>306</split-view-divider-position>
-      <outline x="0" y="0" w="306" h="647">
+      <split-view-divider-position>294</split-view-divider-position>
+      <outline x="0" y="0" w="294" h="683">
         <column name="Notes" width="20"/>
         <column name="Type" width="49"/>
         <column name="Resource" width="150"/>
@@ -73,7 +73,7 @@
         <column name="Efficiency" width="78"/>
         <column name="dsid" width="50"/>
       </outline>
-      <timeline x="-32" y="0" w="741" h="647">
+      <timeline x="-32" y="0" w="1046" h="683">
         <offtime-display>none</offtime-display>
         <task-bar-label task-type="group" position="left">
           <key>Title</key>
@@ -243,5 +243,6 @@
         </footer>
       </master-page-headers>
     </page-adornment>
+    <publishing-client client-identifier="jlP3ayhGalp" document-identifier="641331"/>
   </project>
 </omniplan>
