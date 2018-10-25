@@ -24,14 +24,14 @@ Here is a simple usage example::
     from omniplan import OmniPlanDocument
 
     document = OmniPlanDocument.first_open_document()
-    
+
     # Iterate over all tasks and extract some information
     for task in document.all_tasks():
         print '{}: effort {}'.format(task.name, task.effort)
 
     # Access a task by its ID
     task = document.task_for_id(1234)
-    
+
     # Print all tasks that depend on this task
     dependency_tasks = task.dependencies()
 
@@ -183,16 +183,16 @@ class UTCDateValueConverter(AbstractValueConverter):
 
     # UTC time zone class reference implementation from the Python "datetime" module documentation
     class UTC(datetime.tzinfo):
-    
+
         def utcoffset(self, dt):
             return datetime.timedelta(0)
-    
+
         def tzname(self, dt):
             return "UTC"
-    
+
         def dst(self, dt):
             return datetime.timedelta(0)
-    
+
     utc = UTC()
 
     @classmethod
@@ -205,7 +205,7 @@ class UTCDateValueConverter(AbstractValueConverter):
 # orange red blue purple green black light blue
 
 class TaskChangeRecord(object):
-    
+
     def targets_document(self):
         return False
 
@@ -237,7 +237,7 @@ Color.lightblue = Color(0.4, 0.6, 1.0, 1.0)
 
 
 class SetColorTaskChangeRecord(TaskChangeRecord):
-    
+
     def __init__(self, task, color):
         self.task = task
         self.color = color
@@ -255,7 +255,7 @@ class SetColorTaskChangeRecord(TaskChangeRecord):
 
 
 class AddResourceAssignmentTaskChangeRecord(TaskChangeRecord):
-    
+
     def __init__(self, resource_assignment):
         self.resource_assignment = resource_assignment
 
@@ -270,7 +270,7 @@ class AddResourceAssignmentTaskChangeRecord(TaskChangeRecord):
 
 
 class SetCustomDataValueTaskChangeRecord(TaskChangeRecord):
-    
+
     def __init__(self, task, name, value):
         self.name = name
         self.value = value
@@ -281,7 +281,7 @@ class SetCustomDataValueTaskChangeRecord(TaskChangeRecord):
 
     def __repr__(self):
         return u'<Set custom data value change for task {}: name "{}", value "{}">'.format(self.task, self.name, self.value)
-    
+
 
 class TaskCollection(object):
     """An abstract base class for classes that are containers for sets of tasks in a project."""
@@ -322,10 +322,10 @@ class TaskCollection(object):
         for task_data in task_data_list:
             task = Task(task_data, self)
             self.add_task(task)
-    
+
     def applescript_target_wrapper(self):
         pass
-    
+
     def create_task(self, properties):
         properties = self.encoded_properties(properties)
         applescript_property_pairs = []
@@ -341,7 +341,7 @@ class TaskCollection(object):
         cmd = AppleScript(create_task_code)
         cmd.run()
         task_id = cmd.stdout
-        
+
         read_task_code = self.document().omniplan_task_data_query_applescript_code()
         cmd = AppleScript(read_task_code)
         cmd.run(self.document().name, task_id)
@@ -349,7 +349,7 @@ class TaskCollection(object):
         task = Task(task_data, self)
         self.add_task(task)
         return task
-            
+
     def encoded_properties(self, properties):
         encoded_properties = []
         for key, value in properties.items():
@@ -539,18 +539,18 @@ class Task(TaskCollection):
 
     def commit_changes(self, dry_run=False):
         change_records = self.change_records
-        
+
         records_targeting_document = [record for record in change_records if record.targets_document()]
         records_targeting_task = [record for record in change_records if not record.targets_document()]
 
         self.clear_change_records()
-        
+
         change_applescript_code = '\n'.join(change_record.change_applescript_code() for change_record in records_targeting_task)
         change_applescript_code = self.applescript_target_wrapper().format(change_applescript_code)
-        
+
         doc_change_applescript_code = '\n'.join(change_record.change_applescript_code() for change_record in records_targeting_document)
         doc_change_applescript_code = self.document().applescript_target_wrapper().format(doc_change_applescript_code)
-        
+
         change_applescript_code += doc_change_applescript_code
         
 #        print change_applescript_code
@@ -696,7 +696,7 @@ class OmniPlanDocument(TaskCollection):
     def task_added(self, task):
         self.task_map[task.id] = task
         self.update_custom_data_value_to_task_map_for_task(task)
-    
+
     def update_custom_data_value_to_task_map_for_task(self, task):
         for key, value in task.custom_data.items():
             tasks = self.custom_data_value_to_task_map.setdefault(key, {}).setdefault(value, [])
@@ -723,12 +723,12 @@ class OmniPlanDocument(TaskCollection):
         set newResource to make new resource with properties {{name: "{}"}}
         return id of newResource
         """.format(name)
-        
+
         create_resource_code = self.applescript_target_wrapper().format(make_resource_string)
         cmd = AppleScript(create_resource_code)
         cmd.run()
         resource_id = cmd.stdout
-        
+
         resource = Resource({"id": resource_id, "name": name})
         self.add_resource(resource)
         return resource
@@ -849,7 +849,7 @@ class OmniPlanDocument(TaskCollection):
             return text of root_plist_item
         end run
         """
-        
+
         return doc_query_code + cls.omniplan_applescript_utils_code()
 
     @classmethod
@@ -863,7 +863,7 @@ on get_selection_for_document(|document|)
 			set should_hide to true
 		end if
 	end tell
-	
+
 	set target_window to my window_for_document(|document|)
 	set selected_task_ids to my selected_task_ids_for_window(target_window)
 	set selected_resource_ids to my selected_resource_ids_for_window(target_window)

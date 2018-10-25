@@ -12,10 +12,10 @@ class TestFourCharacterCode(unittest.TestCase):
 
 
 class TestWorkDayTimeInterval(unittest.TestCase):
-    
+
     def test_work_day_time_interval(self):
         self.assertEquals(omniplan.WorkDayTimeInterval(workdays=1).seconds(), 28800)
-        
+
 
 class TestValueConversion(unittest.TestCase):
 
@@ -37,7 +37,7 @@ class TestOmniPlanDocument(unittest.TestCase):
         self.assertEquals(OmniPlanDocument.first_open_document_name(), 'test.oplx')
         document = OmniPlanDocument.first_open_document()
         self.assertEquals(document.name, 'test.oplx')
-        
+
     def test_document_name(self):
         self.assertEquals(self.document.name, 'test.oplx')
 
@@ -52,7 +52,7 @@ class TestOmniPlanDocument(unittest.TestCase):
     def test_value_conversion(self):
         task = self.document.task_for_id(2)
         self.assertEquals(task.effort, omniplan.WorkDayTimeInterval(workdays=1))
-        
+
     def test_custom_value(self):
         task = self.document.tasks_for_custom_data_value('CustomKey', 'Custom Value 1')[0]
         self.assertEquals(task.name, 'Task 2')
@@ -87,12 +87,12 @@ class TestOmniPlanDocument(unittest.TestCase):
         self.assertEquals(resource.name, 'Resource 1')
         tasks = resource.assigned_tasks()
         self.assertEquals(len(tasks), 2)
-        
+
         task = self.document.task_for_id(4)
         resources = task.assigned_resources()
         self.assertEquals(len(resources), 1)
         self.assertEquals(resources[0].name, 'Resource 1')
-        
+
         resource = self.document.resource_for_name('Resource 1')
         self.assertEquals(resources[0], resource)
 
@@ -130,11 +130,11 @@ class TestOmniPlanDocument(unittest.TestCase):
             'name': task_name,
         }
         task = self.document.create_task(task_data)
-        
+
         resource = self.document.resource_for_name('Resource 2')
         if not resource:
             resource = self.document.create_resource(name='Resource 2')
-        
+
         self.assertIsNotNone(resource)
         task.assign_to_resource(resource)
         task.commit_changes()
@@ -159,7 +159,6 @@ class TestOmniPlanDocument(unittest.TestCase):
 #         print self.document.plist_representation()
 
 
-        
+
 if __name__ == "__main__":
     unittest.main()
-    
