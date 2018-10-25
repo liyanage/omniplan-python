@@ -405,7 +405,6 @@ class Task(TaskCollection):
         self.dependents = []
 
         for key, value in task_data.items():
-
             converter_class = self.value_converter_for_property(key)
             if converter_class:
                 try:
@@ -550,8 +549,7 @@ class Task(TaskCollection):
         doc_change_applescript_code = self.document().applescript_target_wrapper().format(doc_change_applescript_code)
 
         change_applescript_code += doc_change_applescript_code
-        
-#        print change_applescript_code
+        # print change_applescript_code
 
         if dry_run:
             print change_applescript_code
