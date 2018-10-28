@@ -72,10 +72,13 @@ class AppleScript(object):
         self.script = script
 
     def run(self, *arguments):
-        cmd = 'osascript -'.split() + [str(i) for i in arguments]
+        cmd = self.run_cmd(*arguments)
         popen = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         self.stdout, self.stderr = popen.communicate(input=self.script.encode('utf-8'))
         self.stdout = self.stdout.rstrip()
+
+    def run_cmd(self, *arguments):
+        return 'osascript -'.split() + [str(i) for i in arguments]
 
     def plist_result(self):
         if not self.stdout:
@@ -641,6 +644,10 @@ class OmniPlanDocument(TaskCollection):
             cmd = AppleScript(script_code)
             cmd.run(self.name)
             if not cmd.stdout:
+                path = '/tmp/omniplan-applescript.txt'
+                with open(path, 'w') as f:
+                    f.write(script_code)
+                    print >> sys.stderr, 'Failed execution of script "{}" for command: {}'.format(path, cmd.run_cmd(self.name))
                 raise Exception('Unable to get project data for OmniPlan document "{}", make sure that it is already open in OmniPlan'.format(self.name))
             self.document_data_raw = cmd.stdout
             self.document_data = cmd.plist_result()
