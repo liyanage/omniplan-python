@@ -1,4 +1,5 @@
 import setuptools
+import sys
 
 setuptools.setup(
     name="omniplan",
@@ -9,7 +10,7 @@ setuptools.setup(
     long_description="Interact with OmniPlan",
     long_description_content_type="text/markdown",
     url="https://github.com/liyanage/omniplan-python",
-    packages=setuptools.find_packages(),
+    py_modules=['omniplan'],
     classifiers=[
         "Programming Language :: Python :: 2",
         "License :: OSI Approved :: MIT License",
