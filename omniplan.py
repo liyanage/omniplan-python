@@ -892,9 +892,12 @@ end selected_task_ids_for_window
 on selected_resource_ids_for_window(|window|)
 	set selected_resource_ids to {}
 	tell application "OmniPlan"
-		repeat with |resource| in (selected resources of |window| as list)
-			set end of selected_resource_ids to id of |resource|
-		end repeat
+		set selected_resources to selected resources of |window|
+		if selected_resources is not missing value then
+			repeat with |resource| in (selected_resources as list)
+				set end of selected_resource_ids to id of |resource|
+			end repeat
+		end if
 	end tell
 	return selected_resource_ids
 end selected_resource_ids_for_window
